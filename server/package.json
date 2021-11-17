@@ -1,0 +1,43 @@
+{
+  "name": "avc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon ./src/index.ts",
+    "build": "tsc",
+    "start": "node ./dist/index.js",
+    "test": "jest",
+    "migrate": "ts-node node_modules/.bin/node-pg-migrate -j ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacobjonsson/avc.git"
+  },
+  "keywords": [],
+  "author": "Jacob Jonsson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jacobjonsson/avc/issues"
+  },
+  "homepage": "https://github.com/jacobjonsson/avc#readme",
+  "dependencies": {
+    "fastify": "^3.24.0",
+    "fastify-cors": "^6.0.2",
+    "fastify-postgres": "^3.6.0",
+    "nanoid": "^3.1.30",
+    "node-pg-migrate": "^6.0.0",
+    "pg": "^8.7.1",
+    "zod": "^3.11.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "@types/node": "^16.11.7",
+    "@types/pg": "^8.6.1",
+    "jest": "^27.3.1",
+    "nodemon": "^2.0.15",
+    "ts-jest": "^27.0.7",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
+  }
+}
