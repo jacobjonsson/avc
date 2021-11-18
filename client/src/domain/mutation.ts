@@ -18,3 +18,20 @@ export interface Mutation {
   conversationId: string;
   createdAt: string;
 }
+
+export type CreateMutation = {
+  author: Author;
+  origin: MutationOrigin;
+  conversationId: string;
+  data:
+    | {
+        type: "insert";
+        index: number;
+        text: string;
+      }
+    | {
+        type: "delete";
+        index: number;
+        length: number;
+      };
+};

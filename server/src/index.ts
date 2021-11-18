@@ -6,12 +6,14 @@ import {
   listMutations,
   listMutationsForConversation,
   storeMutation,
+  deleteMutationsWithConversationId,
 } from "./store/mutation";
 import {Mutation, MutationOrigin} from "./domain/mutation";
 import {Conversation} from "./domain/conversation";
 import {formatZodErrors} from "./zod";
 import {createMutationSchema} from "./schemas";
 import {calculateText} from "./text";
+import {z} from "zod";
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/avc";
@@ -21,7 +23,7 @@ const server = fastify({logger: true});
 server.register(fastifyPostgres, {connectionString: DATABASE_URL});
 
 server.register(fastifyCors, {
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "DELETE", "OPTION"],
   origin:
     process.env.ENV === "production"
       ? [
@@ -120,6 +122,50 @@ server.get("/conversations", async (request, reply) => {
       lastMutation: conversation.lastMutation,
     })),
   });
+});
+
+const getConversationParamsSchema = z.object({
+  conversationId: z.string(),
+});
+
+server.get("/conversations/:conversationId", async (request, reply) => {
+  const params = getConversationParamsSchema.safeParse(request.params);
+  if (!params.success) {
+    reply.status(400).send({ok: false, msg: formatZodErrors(params.error)});
+    return;
+  }
+
+  const mutations = await listMutationsForConversation(
+    server.pg,
+    params.data.conversationId,
+    "DESC"
+  );
+
+  let conversation: Partial<Conversation> = {};
+  conversation.id = params.data.conversationId;
+  conversation.lastMutation = mutations[0];
+  conversation.lastMutation.origin = calculateMutationOrigin(mutations);
+  conversation.text = calculateText(mutations.reverse());
+  reply.status(200).send({ok: true, conversation: conversation});
+});
+
+const deleteConversationParamsSChema = z.object({
+  conversationId: z.string(),
+});
+
+server.delete("/conversations/:conversationId", async (request, reply) => {
+  const params = getConversationParamsSchema.safeParse(request.params);
+  if (!params.success) {
+    reply.status(400).send({ok: false, msg: formatZodErrors(params.error)});
+    return;
+  }
+
+  await deleteMutationsWithConversationId(
+    server.pg,
+    params.data.conversationId
+  );
+
+  reply.status(200).send({ok: true, msg: "conversation deleted"});
 });
 
 server.post("/mutations", async (request, reply) => {
