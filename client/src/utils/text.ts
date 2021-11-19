@@ -30,9 +30,6 @@ export function diffTexts(oldText: string, newText: string): TextDiff {
   }
 
   const startIndex = findStartIndex(oldText, newText);
-  if (startIndex === -1) {
-    return {type: "identical"};
-  }
 
   let oldEndIndex = 0;
   let newEndIndex = 0;
@@ -72,6 +69,5 @@ function findStartIndex(oldText: string, newText: string): number {
     }
   }
 
-  // We return -1 to indicate that the text is identical.
-  return -1;
+  return oldText.length;
 }

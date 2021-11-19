@@ -1,79 +1,30 @@
-import {useEffect, useState} from "react";
-import {Button} from "../components/button";
 import {
   ChevronRightIcon,
   StarIcon as StarIconOutline,
   TrashIcon,
 } from "@heroicons/react/outline";
 import {StarIcon as StarIconSolid} from "@heroicons/react/solid";
-import {Conversation} from "../domain/conversation";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import {indexMachine} from "./indexMachine";
+import {Button} from "../components/button";
+import {useMachine} from "@xstate/react";
 
 export function IndexRoute() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [stars, setStars] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/conversations`)
-      .then(res => res.json())
-      .then(data => setConversations(data.conversations))
-      .catch(err => console.error(err));
-
-    fetch(`${import.meta.env.VITE_API_URL}/stars`, {credentials: "include"})
-      .then(res => res.json())
-      .then(data => setStars(data.stars))
-      .catch(err => console.error(err));
-  }, []);
-
-  function star(id: string) {
-    fetch(`${import.meta.env.VITE_API_URL}/stars`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      credentials: "include",
-      body: JSON.stringify({
-        stared: true,
-        conversationId: id,
-      }),
-    })
-      .then(() => {
-        setStars({...stars, [id]: true});
-      })
-      .catch(err => console.error(err));
-  }
-
-  function unstar(id: string) {
-    fetch(`${import.meta.env.VITE_API_URL}/stars`, {
-      method: "POST",
-      credentials: "include",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        stared: false,
-        conversationId: id,
-      }),
-    })
-      .then(() => {
-        setStars({...stars, [id]: false});
-      })
-      .catch(err => console.error(err));
-  }
-
-  function deleteConversation(id: string) {
-    fetch(`${import.meta.env.VITE_API_URL}/conversations/${id}`, {
-      method: "DELETE",
-    })
-      .then(() => {
-        setConversations(conversations.filter(c => c.id !== id));
-      })
-      .catch(err => console.error(err));
-  }
+  const [state, send] = useMachine(indexMachine, {
+    actions: {
+      redirect: (_, evt) => navigate(`/conversations/${evt.data.id}`),
+    },
+  });
 
   return (
     <div className="container mx-auto px-4 md:px-0 pt-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl">Conversations</h1>
 
-        <Button as="a" href="/conversations/new">
-          Create conversation
+        <Button as="button" onClick={() => send("create")}>
+          Create new
         </Button>
       </div>
 
@@ -112,7 +63,7 @@ export function IndexRoute() {
                 </thead>
 
                 <tbody>
-                  {conversations.map((conversation, idx) => (
+                  {state.context.conversations.map((conversation, idx) => (
                     <tr
                       key={conversation.id}
                       className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
@@ -131,12 +82,12 @@ export function IndexRoute() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() =>
-                            stars[conversation.id]
-                              ? unstar(conversation.id)
-                              : star(conversation.id)
+                            state.context.stars[conversation.id]
+                              ? send("unStar", {id: conversation.id})
+                              : send("star", {id: conversation.id})
                           }
                         >
-                          {stars[conversation.id] ? (
+                          {state.context.stars[conversation.id] ? (
                             <StarIconSolid className="w-6 h-6 text-yellow-600" />
                           ) : (
                             <StarIconOutline className="w-6 h-6 text-yellow-600" />
@@ -146,7 +97,7 @@ export function IndexRoute() {
 
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
-                          onClick={() => deleteConversation(conversation.id)}
+                          onClick={() => send("delete", {id: conversation.id})}
                         >
                           <TrashIcon className="w-6 h-6 text-red-600" />
                         </button>

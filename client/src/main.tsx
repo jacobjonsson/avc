@@ -2,7 +2,7 @@ import "./index.css";
 
 import React from "react";
 import ReactDOM from "react-dom";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {BrowserRouter, Route, Routes, Navigate} from "react-router-dom";
 import {IndexRoute} from "./routes/index";
 import {ConversationRoute} from "./routes/conversation";
 
@@ -16,6 +16,8 @@ function App() {
             path="/conversations/:conversationId"
             element={<ConversationRoute />}
           />
+
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
     </div>

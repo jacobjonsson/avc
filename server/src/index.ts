@@ -16,7 +16,11 @@ import {formatZodErrors} from "./zod";
 import {createMutationSchema} from "./schemas";
 import {calculateText} from "./text";
 import {z} from "zod";
-import {listConversations, storeConversation} from "./store/conversation";
+import {
+  deleteConversation,
+  listConversations,
+  storeConversation,
+} from "./store/conversation";
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/avc";
@@ -156,7 +160,7 @@ server.post("/conversations", async (request, reply) => {
 
   await storeConversation(server.pg, body.data.id);
 
-  reply.status(201).send({ok: true, msg: "ok"});
+  reply.status(201).send({ok: true, id: body.data.id});
 });
 
 const getConversationParamsSchema = z.object({
@@ -178,9 +182,14 @@ server.get("/conversations/:conversationId", async (request, reply) => {
 
   let conversation: Partial<Conversation> = {};
   conversation.id = params.data.conversationId;
-  conversation.lastMutation = mutations[0];
-  conversation.lastMutation.origin = calculateMutationOrigin(mutations);
-  conversation.text = calculateText(mutations.reverse());
+  if (mutations.length > 0) {
+    conversation.lastMutation = mutations[0];
+    conversation.lastMutation.origin = calculateMutationOrigin(mutations);
+    conversation.text = calculateText(mutations.reverse());
+  } else {
+    conversation.text = "";
+  }
+
   reply.status(200).send({ok: true, conversation: conversation});
 });
 
@@ -189,16 +198,13 @@ const deleteConversationParamsSChema = z.object({
 });
 
 server.delete("/conversations/:conversationId", async (request, reply) => {
-  const params = getConversationParamsSchema.safeParse(request.params);
+  const params = deleteConversationParamsSChema.safeParse(request.params);
   if (!params.success) {
     reply.status(400).send({ok: false, msg: formatZodErrors(params.error)});
     return;
   }
 
-  await deleteMutationsWithConversationId(
-    server.pg,
-    params.data.conversationId
-  );
+  await deleteConversation(server.pg, params.data.conversationId);
 
   reply.status(200).send({ok: true, msg: "conversation deleted"});
 });
@@ -271,7 +277,9 @@ server.post("/stars", async (request, reply) => {
     return;
   }
 
+  console.log(request.cookies);
   let userId = request.cookies.userId;
+  console.log(userId);
   if (!userId) {
     userId = nanoid();
   }

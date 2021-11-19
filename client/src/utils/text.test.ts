@@ -22,6 +22,15 @@ const testCases: TestCase[] = [
     },
   },
   {
+    oldText: "hello",
+    newText: "hello world",
+    diff: {
+      type: "insert",
+      index: 5,
+      text: " world",
+    },
+  },
+  {
     oldText: "abc",
     newText: "defabc",
     diff: {

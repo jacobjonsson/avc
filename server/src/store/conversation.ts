@@ -9,6 +9,17 @@ export function storeConversation(client: PGClient, conversationId: string) {
   return client.query(query, [conversationId]);
 }
 
+export async function deleteConversation(
+  client: PGClient,
+  conversationId: string
+) {
+  const query = `
+    DELETE FROM conversations
+    WHERE id = $1
+  `;
+  await client.query(query, [conversationId]);
+}
+
 export function listConversations(client: PGClient): Promise<string[]> {
   const query = `SELECT id FROM conversations`;
 
