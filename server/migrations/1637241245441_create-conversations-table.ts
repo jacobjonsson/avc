@@ -6,6 +6,7 @@ export const shorthands: ColumnDefinitions | undefined = undefined;
 export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.createTable("conversations", {
     id: {type: "text", primaryKey: true, notNull: true},
+    deleted: {type: "boolean", notNull: true, default: false},
   });
 
   pgm.addConstraint("mutations", "conversation_id_fkey", {

@@ -18,7 +18,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     foreignKeys: {
       columns: "conversation_id",
       references: "conversations(id)",
-      onDelete: "CASCADE",
     },
   });
 }

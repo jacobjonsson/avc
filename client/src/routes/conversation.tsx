@@ -4,6 +4,7 @@ import {Button} from "../components/button";
 import {diffTexts} from "../utils/text";
 import {useMachine} from "@xstate/react";
 import {conversationMachine} from "./conversationMachine";
+import {Breadcrumbs} from "../components/breadcrumbs";
 
 export function ConversationRoute() {
   const {conversationId} = useParams();
@@ -18,8 +19,17 @@ export function ConversationRoute() {
   }, [conversationId]);
 
   return (
-    <div className="container mx-auto px-4 md:px-0 pt-4">
-      <h1 className="text-xl mb-4">Conversation: {conversationId}</h1>
+    <div className="container mx-auto px-4 md:px-0 pt-4 space-y-8">
+      <Breadcrumbs
+        items={[
+          {name: "Conversations", href: "/", current: false},
+          {
+            name: conversationId!,
+            href: `/conversations/${conversationId}`,
+            current: true,
+          },
+        ]}
+      />
 
       {state.matches("editing") ? (
         <>
@@ -59,42 +69,53 @@ export function ConversationRoute() {
               name="text"
               id="text"
               ref={textAreaRef}
-              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md mb-4"
               placeholder="Edit the text..."
               disabled={!state.matches("editing")}
               defaultValue={state.context.conversation!.text}
             />
 
-            <Button as="button" type="submit">
+            <Button as="button" type="submit" className="mr-4">
               Save
+            </Button>
+
+            <Button
+              as="button"
+              type="button"
+              variant="secondary"
+              onClick={() => send("discard")}
+            >
+              Discard
             </Button>
           </form>
         </>
       ) : null}
 
       {state.matches("idle") ? (
-        <>
-          <div className="border-b mb-4">
-            <div className="mx-px mt-px px-3 pt-2 pb-12 text-sm leading-5 text-gray-800">
-              {state.context.conversation!.text}
-            </div>
-          </div>
-
-          <div className="flex justify-start items-center">
-            <Button
-              className="mr-4"
-              as="button"
-              type="button"
-              onClick={() => send("edit", {author: "bob"})}
+        <div>
+          <div className="mb-4">
+            <textarea
+              disabled
+              rows={5}
+              className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md opacity-90"
             >
-              Edit as Bob
-            </Button>
-
-            <Button as="button" onClick={() => send("edit", {author: "bob"})}>
-              Edit as Alice
-            </Button>
+              {state.context.conversation!.text}
+            </textarea>
           </div>
-        </>
+
+          <Button
+            className="mr-4"
+            as="button"
+            type="button"
+            onClick={() => send("edit", {author: "bob"})}
+          >
+            Edit as Bob
+          </Button>
+
+          <Button as="button" onClick={() => send("edit", {author: "bob"})}>
+            Edit as Alice
+          </Button>
+        </div>
       ) : null}
     </div>
   );

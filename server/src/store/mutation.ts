@@ -18,6 +18,7 @@ function rowToMutation(row: MutationDB): Mutation {
 export async function listMutations(pool: PGClient): Promise<Mutation[]> {
   const query = `
     SELECT * FROM mutations
+    WHERE conversation_id IN (SELECT id FROM conversations WHERE deleted = false)
     ORDER BY created_at DESC
   `;
   const {rows} = await pool.query<MutationDB>(query);
