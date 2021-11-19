@@ -277,9 +277,7 @@ server.post("/stars", async (request, reply) => {
     return;
   }
 
-  console.log(request.cookies);
   let userId = request.cookies.userId;
-  console.log(userId);
   if (!userId) {
     userId = nanoid();
   }

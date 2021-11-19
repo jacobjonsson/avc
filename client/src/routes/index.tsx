@@ -8,6 +8,7 @@ import {Link, useNavigate} from "react-router-dom";
 import {indexMachine} from "./indexMachine";
 import {Button} from "../components/button";
 import {useMachine} from "@xstate/react";
+import {LoadingIndicator} from "../components/loadingIndicator";
 
 export function IndexRoute() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export function IndexRoute() {
 
   return (
     <div className="container mx-auto px-4 md:px-0 pt-4">
+      {state.value.toString().includes("pending") && <LoadingIndicator />}
+
       <div className="flex justify-between items-center">
         <h1 className="text-2xl">Conversations</h1>
 
@@ -68,12 +71,12 @@ export function IndexRoute() {
                       key={conversation.id}
                       className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(
                           parseInt(conversation.id, 10)
                         ).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {conversation.text.length > 20
                           ? conversation.text.slice(0, 20) + "..."
                           : conversation.text}

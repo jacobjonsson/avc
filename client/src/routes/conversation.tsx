@@ -5,6 +5,7 @@ import {diffTexts} from "../utils/text";
 import {useMachine} from "@xstate/react";
 import {conversationMachine} from "./conversationMachine";
 import {Breadcrumbs} from "../components/breadcrumbs";
+import {LoadingIndicator} from "../components/loadingIndicator";
 
 export function ConversationRoute() {
   const {conversationId} = useParams();
@@ -20,6 +21,8 @@ export function ConversationRoute() {
 
   return (
     <div className="container mx-auto px-4 md:px-0 pt-4 space-y-8">
+      <LoadingIndicator />
+
       <Breadcrumbs
         items={[
           {name: "Conversations", href: "/", current: false},
@@ -41,10 +44,6 @@ export function ConversationRoute() {
                 state.context.conversation!.text,
                 textAreaRef.current!.value
               );
-
-              console.log(state.context.conversation!.text);
-              console.log(textAreaRef.current!.value);
-              console.log(textDiff);
 
               if (textDiff.type === "identical") {
                 send("discard");

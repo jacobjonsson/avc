@@ -19,12 +19,6 @@ export const conversationMachine = createMachine<ConversationContext>({
     error: undefined,
   },
 
-  on: {
-    "*": {
-      actions: (_, evt) => console.log(evt),
-    },
-  },
-
   states: {
     pendingParam: {
       on: {

@@ -28,8 +28,6 @@ export async function upsertStar(
   conversationId: string,
   stared: boolean
 ): Promise<void> {
-  console.log(userId, conversationId, stared);
-
   const query = `
     INSERT INTO stars (id, conversation_id, stared)
     VALUES ($1, $2, $3)
