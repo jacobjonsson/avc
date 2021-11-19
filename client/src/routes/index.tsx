@@ -68,12 +68,12 @@ export function IndexRoute() {
                       key={conversation.id}
                       className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
                         {new Date(
                           parseInt(conversation.id, 10)
                         ).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {conversation.text.length > 20
                           ? conversation.text.slice(0, 20) + "..."
                           : conversation.text}
