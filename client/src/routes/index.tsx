@@ -11,22 +11,50 @@ import {Link} from "react-router-dom";
 
 export function IndexRoute() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [stared, setStared] = useState<string[]>([]);
+  const [stars, setStars] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/conversations`)
       .then(res => res.json())
       .then(data => setConversations(data.conversations))
       .catch(err => console.error(err));
+
+    fetch(`${import.meta.env.VITE_API_URL}/stars`, {credentials: "include"})
+      .then(res => res.json())
+      .then(data => setStars(data.stars))
+      .catch(err => console.error(err));
   }, []);
 
-  function toggleStar(id: string) {
-    const index = stared.indexOf(id);
-    if (index === -1) {
-      setStared([...stared, id]);
-    } else {
-      setStared(stared.filter(i => i !== id));
-    }
+  function star(id: string) {
+    fetch(`${import.meta.env.VITE_API_URL}/stars`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      credentials: "include",
+      body: JSON.stringify({
+        stared: true,
+        conversationId: id,
+      }),
+    })
+      .then(() => {
+        setStars({...stars, [id]: true});
+      })
+      .catch(err => console.error(err));
+  }
+
+  function unstar(id: string) {
+    fetch(`${import.meta.env.VITE_API_URL}/stars`, {
+      method: "POST",
+      credentials: "include",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        stared: false,
+        conversationId: id,
+      }),
+    })
+      .then(() => {
+        setStars({...stars, [id]: false});
+      })
+      .catch(err => console.error(err));
   }
 
   function deleteConversation(id: string) {
@@ -101,8 +129,14 @@ export function IndexRoute() {
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => toggleStar(conversation.id)}>
-                          {stared.includes(conversation.id) ? (
+                        <button
+                          onClick={() =>
+                            stars[conversation.id]
+                              ? unstar(conversation.id)
+                              : star(conversation.id)
+                          }
+                        >
+                          {stars[conversation.id] ? (
                             <StarIconSolid className="w-6 h-6 text-yellow-600" />
                           ) : (
                             <StarIconOutline className="w-6 h-6 text-yellow-600" />

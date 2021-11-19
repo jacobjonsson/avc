@@ -9,12 +9,14 @@ export function createEffect<Type extends string, Data>(
   type: Type,
   data: Data
 ): Effect<Type, Data> {
-  return {
+  const effect = {
     type,
     executed: false,
     markAsExecuted() {
-      this.executed = true;
+      effect.executed = true;
     },
     data,
   };
+
+  return effect;
 }

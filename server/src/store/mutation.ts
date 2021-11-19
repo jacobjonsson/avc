@@ -42,6 +42,14 @@ export async function storeMutation(
   pool: PGClient,
   mutation: Mutation
 ): Promise<void> {
+  await pool.query(
+    `
+  INSERT INTO conversations (id)
+  VALUES ($1)
+  ON CONFLICT DO NOTHING`,
+    [mutation.conversationId]
+  );
+
   const query = `
     INSERT INTO mutations (id, type, index, length, text, author, created_at, conversation_id)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

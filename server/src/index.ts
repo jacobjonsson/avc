@@ -1,6 +1,7 @@
 import fastify from "fastify";
 import fastifyPostgres from "fastify-postgres";
 import fastifyCors from "fastify-cors";
+import fastifyCookie from "fastify-cookie";
 import {nanoid} from "nanoid";
 import {
   listMutations,
@@ -8,12 +9,14 @@ import {
   storeMutation,
   deleteMutationsWithConversationId,
 } from "./store/mutation";
+import {listStars, upsertStar} from "./store/star";
 import {Mutation, MutationOrigin} from "./domain/mutation";
 import {Conversation} from "./domain/conversation";
 import {formatZodErrors} from "./zod";
 import {createMutationSchema} from "./schemas";
 import {calculateText} from "./text";
 import {z} from "zod";
+import {listConversations, storeConversation} from "./store/conversation";
 
 const DATABASE_URL =
   process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/avc";
@@ -21,9 +24,11 @@ const DATABASE_URL =
 const server = fastify({logger: true});
 
 server.register(fastifyPostgres, {connectionString: DATABASE_URL});
-
+server.register(fastifyCookie);
 server.register(fastifyCors, {
   methods: ["GET", "POST", "DELETE", "OPTION"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Set-Cookie"],
   origin:
     process.env.ENV === "production"
       ? [
@@ -31,7 +36,7 @@ server.register(fastifyCors, {
           "https://stage.account.ava.me",
           "https://avc-client.onrender.com",
         ]
-      : "*",
+      : "http://localhost:3000",
 });
 
 server.setErrorHandler((error, _, reply) => {
@@ -86,6 +91,7 @@ function calculateMutationOrigin(mutations: Mutation[]): MutationOrigin {
 
 // GET /conversations
 server.get("/conversations", async (request, reply) => {
+  const conversationIds = await listConversations(server.pg);
   const mutations = await listMutations(server.pg);
 
   const conversations: Conversation[] = [];
@@ -114,6 +120,18 @@ server.get("/conversations", async (request, reply) => {
     );
   }
 
+  const emptyConversations = conversationIds.filter(
+    convo => !conversations.some(c => c.id === convo)
+  );
+
+  for (const emptyConversation of emptyConversations) {
+    conversations.push({
+      id: emptyConversation,
+      mutations: [],
+      text: "",
+    });
+  }
+
   reply.status(200).send({
     ok: true,
     conversations: conversations.map(conversation => ({
@@ -122,6 +140,23 @@ server.get("/conversations", async (request, reply) => {
       lastMutation: conversation.lastMutation,
     })),
   });
+});
+
+const postConversationsScheme = z.object({
+  id: z.string(),
+});
+
+// POST /conversations
+server.post("/conversations", async (request, reply) => {
+  const body = postConversationsScheme.safeParse(request.body);
+  if (!body.success) {
+    reply.status(400).send({ok: false, msg: formatZodErrors(body.error)});
+    return;
+  }
+
+  await storeConversation(server.pg, body.data.id);
+
+  reply.status(201).send({ok: true, msg: "ok"});
 });
 
 const getConversationParamsSchema = z.object({
@@ -204,4 +239,56 @@ server.listen(process.env.PORT || "3001", error => {
     server.log.error(error);
     process.exit(1);
   }
+});
+
+server.get("/stars", async (request, reply) => {
+  const userId = request.cookies.userId;
+
+  if (!userId) {
+    reply
+      .status(200)
+      .setCookie("userId", nanoid(), {
+        httpOnly: true,
+        path: "/",
+        domain: undefined,
+      })
+      .send({ok: true, stars: {}});
+  }
+
+  const stars = await listStars(server.pg, userId);
+  reply.status(200).send({ok: true, stars});
+});
+
+const postStarsSchema = z.object({
+  conversationId: z.string(),
+  stared: z.boolean(),
+});
+
+server.post("/stars", async (request, reply) => {
+  const body = postStarsSchema.safeParse(request.body);
+  if (!body.success) {
+    reply.status(400).send({ok: false, msg: formatZodErrors(body.error)});
+    return;
+  }
+
+  let userId = request.cookies.userId;
+  if (!userId) {
+    userId = nanoid();
+  }
+
+  await upsertStar(
+    server.pg,
+    userId,
+    body.data.conversationId,
+    body.data.stared
+  );
+
+  reply
+    .status(201)
+    .setCookie("userId", userId, {
+      httpOnly: true,
+      path: "/",
+      domain: undefined,
+    })
+    .send({ok: true, msg: "ok"});
 });
