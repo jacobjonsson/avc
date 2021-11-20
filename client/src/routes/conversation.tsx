@@ -21,7 +21,7 @@ export function ConversationRoute() {
 
   return (
     <div className="container mx-auto px-4 md:px-0 pt-4 space-y-8">
-      <LoadingIndicator />
+      {state.value.toString().includes("pending") && <LoadingIndicator />}
 
       <Breadcrumbs
         items={[
