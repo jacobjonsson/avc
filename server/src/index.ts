@@ -7,7 +7,6 @@ import {
   listMutations,
   listMutationsForConversation,
   storeMutation,
-  deleteMutationsWithConversationId,
 } from "./store/mutation";
 import {listStars, upsertStar} from "./store/star";
 import {Mutation, MutationOrigin} from "./domain/mutation";

@@ -66,14 +66,3 @@ export async function storeMutation(
     mutation.conversationId,
   ]);
 }
-
-export async function deleteMutationsWithConversationId(
-  pool: PGClient,
-  conversationId: string
-): Promise<void> {
-  const query = `
-    DELETE FROM mutations
-    WHERE conversation_id = $1
-  `;
-  await pool.query(query, [conversationId]);
-}
